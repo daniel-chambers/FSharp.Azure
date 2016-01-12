@@ -103,8 +103,8 @@ module DataQuery =
                 |> Seq.choose (fun o -> match o with | null -> None | o -> Some (o.GetHashCode()))
                 |> Seq.reduce (^^^)
 
-    [<AbstractClass>]
-    type DataQueryTests(connectionString : string) = 
+    type DataQueryTests() = 
+        let connectionString = ConnectionStrings.fromEnvironment()
         let account = CloudStorageAccount.Parse connectionString
         let tableClient = account.CreateCloudTableClient()
         let gameTableName = Storage.getTableName()
@@ -455,12 +455,3 @@ module DataQuery =
 
         interface IDisposable with
             member __.Dispose() = gameTable.Delete()
-
-
-    [<Trait("Category", "Remote")>]
-    type ``Data Query Tests`` () =
-        inherit DataQueryTests(ConnectionStrings.fromEnvironment())
-
-    [<Trait("Category", "Emulator")>]
-    type ``Data Query Tests (Storage Emulator)`` () =
-        inherit DataQueryTests(ConnectionStrings.storageEmulator)

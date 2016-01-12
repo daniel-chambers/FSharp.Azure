@@ -55,9 +55,10 @@ module DataModification =
         { [<PartitionKey>] MuchInternal: string
           [<RowKey>] VeryWow: string }
 
-    [<AbstractClass>]
-    type DataModificationTests(connectionString : string) = 
+    type DataModificationTests() = 
         static do EntityIdentiferReader.GetIdentifier <- getPureIdentifier
+
+        let connectionString = ConnectionStrings.fromEnvironment()
 
         let account = CloudStorageAccount.Parse connectionString
         let tableClient = account.CreateCloudTableClient()
@@ -519,11 +520,3 @@ module DataModification =
 
         interface IDisposable with
             member __.Dispose() = gameTable.Delete()
-
-    [<Trait("Category", "Remote")>]
-    type ``Data Modification Tests``() = 
-        inherit DataModificationTests(ConnectionStrings.fromEnvironment())
-
-    [<Trait("Category", "Emulator")>]
-    type ``Data Modification Tests (Storage Emulator)``() = 
-        inherit DataModificationTests(ConnectionStrings.storageEmulator)

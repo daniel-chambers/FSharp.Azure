@@ -3,7 +3,11 @@
 module ConnectionStrings =
 
     let storageEmulator = "UseDevelopmentStorage=true;"
-    let fromEnvironment() = System.Environment.GetEnvironmentVariable "FSharpAzureStorageConnectionString"
+    let fromEnvironment() = 
+        let envVar = System.Environment.GetEnvironmentVariable "FSharpAzureStorageConnectionString"
+        if System.String.IsNullOrWhiteSpace envVar 
+        then storageEmulator
+        else envVar
 
 
 module Storage =

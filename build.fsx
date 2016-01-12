@@ -25,8 +25,7 @@ let gitHome = "https://github.com/" + gitOwner
 let gitName = "FSharp.Azure.Storage"
 let gitRaw = environVarOrDefault "gitRaw" "https://raw.github.com/" + gitOwner
 
-let remoteTests = environVarOrDefault "RunRemoteTests" "false" |> Boolean.Parse
-let emulatorTests = environVarOrDefault "RunEmulatorTests" "false" |> Boolean.Parse
+let remoteTestsConnectionString = environVarOrNone "RemoteTestsConnectionString"
 
 //
 //// --------------------------------------------------------------------------------------
@@ -87,18 +86,25 @@ Target "Build" (fun () ->
 // --------------------------------------------------------------------------------------
 // Run the unit tests using test runner & kill test runner when complete
 
-Target "RunTests" (fun _ ->
+let runTests variation connectionString =
+    setProcessEnvironVar "FSharpAzureStorageConnectionString" connectionString
     testAssemblies
     |> Seq.collect (!!)
     |> xUnit2 (fun (p : XUnit2Params) -> 
         { p with
             TimeOut = TimeSpan.FromMinutes 20.
             Parallel = ParallelMode.NoParallelization
-            ExcludeTraits = 
-                [ if not emulatorTests then yield ("Category", "Emulator")
-                  if not remoteTests then yield ("Category", "Remote") ]
+            HtmlOutputPath = Some <| sprintf "xunit.%s.html" variation})
 
-            HtmlOutputPath = Some "xunit.html"})
+Target "RunTests" (fun _ ->
+    trace "Running tests against the storage emulator"
+    runTests "Emulator" "UseDevelopmentStorage=true;"
+    
+    remoteTestsConnectionString 
+    |> Option.iter (fun connectionString ->
+        trace "Running tests against storage account"
+        runTests "Remote" connectionString
+    )
 )
 
 FinalTarget "CloseTestRunner" (fun _ ->  
